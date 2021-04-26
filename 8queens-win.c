@@ -22,10 +22,18 @@ void freeBoard(int** board){
 // Prints given 2d array as table
 void printStatistics(double** statistics){
     printf("No.\tMove Count\tRandom Restart Count\tTime Spend(Seconds)\n");
+    double meanTime = 0, meanRandom = 0, meanMove = 0;
     for (int i = 0; i < 25; i++)
     {
         printf("%d\t%.0f\t\t%.0f\t\t\t%f\n",i+1, statistics[i][0], statistics[i][1], statistics[i][2]);
-    }    
+        meanTime = statistics[i][2];
+        meanMove = statistics[i][0];
+        meanRandom = statistics[i][1];
+    }
+    meanTime /= 25;
+    meanMove /= 25;
+    meanRandom /= 25;
+    printf("Avarage Move Count: %.2f\nAvarage Random Start: %.2f\nAvarage Time Spend: %f", meanMove, meanRandom, meanTime);
 }
 
 // Prints given chess board: 1 represents queens
