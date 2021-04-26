@@ -22,10 +22,18 @@ void freeBoard(int** board){
 // Prints given 2d array as table
 void printStatistics(double** statistics){
     printf("No.\tMove Count\tRandom Restart Count\tTime Spend(Seconds)\n");
+    double meanTime = 0, meanRandom = 0, meanMove = 0;
     for (int i = 0; i < 25; i++)
     {
         printf("%d\t%.0f\t\t%.0f\t\t\t%f\n",i+1, statistics[i][0], statistics[i][1], statistics[i][2]);
-    }    
+        meanTime = statistics[i][2];
+        meanMove = statistics[i][0];
+        meanRandom = statistics[i][1];
+    }
+    meanTime /= 25;
+    meanMove /= 25;
+    meanRandom /= 25;
+    printf("Avarage Move Count: %.2f\nAvarage Random Start: %.2f\nAvarage Time Spend: %f", meanMove, meanRandom, meanTime);
 }
 
 // Prints given chess board: 1 represents queens
@@ -128,93 +136,15 @@ int evaluteState(int* state){
     return (int) result / 2;
 }
 
-// Evalutes board by attack counts
-int evaluteBoard(int** board, int* state){
-    // Attack count
-    int result = 0;
-    int row;
-    int col;
-    // Checks every queen
-    for (int i = 0; i < N; i++)
-    {
-        row = state[i];
-        col = i;
-        // Right scan
-        while(++col < N){
-            if(board[row][col] == 1){
-                result++;
-                break;
-            }
-        }
-
-        col = i;
-        // Left scan
-        while(--col >= 0){
-            if(board[row][col] == 1){
-                result++;
-                break;
-            }
-        }
-        // Diagonal scans
-
-        col = i;
-        // Right Down scan
-        while(++col < N && ++row < N){
-            if(board[row][col] == 1){
-                result++;
-                break;
-            }
-        }
-
-        row = state[i];
-        col = i;
-        // Right Up scan
-        while(++col < N && --row >= 0){
-            if(board[row][col] == 1){
-                result++;
-                break;
-            }
-        }
-        
-        row = state[i];
-        col = i;
-        //Left Up scan
-        while(--col >= 0 && --row >= 0){
-            if(board[row][col] == 1){
-                result++;
-                break;
-            }
-        }
-        
-        row = state[i];
-        col = i;
-        // Left Down scan
-        while(--col >= 0 && ++row < N){
-            if(board[row][col] == 1){
-                result++;
-                break;
-            }
-        }
-    }
-    // Retruns only pairs
-    return (int) result/2; 
-}
-
 // Gets best neighbour to current state (Makes only one move)
-void getBestNeighbour(int** board ,int* state, int result){
+void getBestNeighbour(int* state, int result){
     // Keeps better state
     int* newState;
 
     newState = (int*) malloc(sizeof(int) * N);
 
-    int** newBoard;
-
-    newBoard = (int**) malloc(sizeof(int*) * N);
-    for (int i = 0; i < N; i++) newBoard[i] = (int*) malloc(sizeof(int) * N);
-
     // Copies current state to 
     copyState(state, newState);  
-    getBoardUsingState(newState, newBoard);
     int newResult = result;
 
     // Keeps temporary state for comparison 
@@ -222,13 +152,7 @@ void getBestNeighbour(int** board ,int* state, int result){
 
     neighbourState = (int*) malloc(sizeof(int) * N);
 
-    int** neighbourBoard;
-
-    neighbourBoard = (int**) malloc(sizeof(int*) * N);
-    for (int i = 0; i < N; i++) neighbourBoard[i] = (int*) malloc(sizeof(int) * N);
-
     copyState(state, neighbourState);
-    getBoardUsingState(neighbourState, neighbourBoard);
 
     int neighbourResult = result;
     // Checking all neighbour states and keeps best one in newState and newBoard
@@ -237,43 +161,30 @@ void getBestNeighbour(int** board ,int* state, int result){
             // Skiping current State
             if(j != state[i]){
                 neighbourState[i] = j;
-                neighbourBoard[neighbourState[i]][i] = 1;
-                neighbourBoard[state[i]][i] = 0;
                 neighbourResult = evaluteState(neighbourState);
                 if (neighbourResult <= newResult){
                     copyState(neighbourState, newState);
-                    getBoardUsingState(newState, newBoard);
                     newResult = neighbourResult;
                 }
                 // Reverting changes for next check
-                neighbourBoard[neighbourState[i]][i] = 0;
-                neighbourBoard[state[i]][i] = 1;
                 neighbourState[i] = state[i];
             }
         }
     }
     // Copies newState and board to old ones
     copyState(newState, state);
-    getBoardUsingState(state, board);
-
     // Frees unused memory
-    freeBoard(newBoard);
-    freeBoard(neighbourBoard);
     free(newState);
     free(neighbourState);
 
 }
 
 // HillClimb algorithm
-void* hillClimb(int** board, int* state){
-    // Neighbour state and board
+void* hillClimb(int* state){
+    // Neighbour state
     int* neighbourState;
-    int** neighbourBoard;
 
     neighbourState = (int*) malloc(sizeof(int) * N);
-
-    neighbourBoard = (int**) malloc(sizeof(int*) * N);
-    for (int i = 0; i < N; i++) neighbourBoard[i] = (int*) malloc(sizeof(int) * N);
 
     // Statistics
     double randomRestartCount = 0, moveCount = 0;
@@ -291,17 +202,14 @@ void* hillClimb(int** board, int* state){
     int neighbourResult = result;
 
     copyState(state, neighbourState);
-    getBoardUsingState(state, neighbourBoard);
-
 
     while (true)
     {
         // Copies previous best state and board to state and board variables
         copyState(neighbourState, state);
-        getBoardUsingState(state, board);
         result = neighbourResult;
         // Gets best neighbour to the current state
-        getBestNeighbour(neighbourBoard, neighbourState, neighbourResult);
+        getBestNeighbour(neighbourState, neighbourResult);
         // getBestNeighbour only makes one move only
         moveCount++;
         neighbourResult = evaluteState(neighbourState);
@@ -315,7 +223,6 @@ void* hillClimb(int** board, int* state){
             // either way we need random restart
             // printf("Random Restart\n");
             getRandomState(neighbourState);
-            getBoardUsingState(neighbourState, neighbourBoard);
             neighbourResult = evaluteState(neighbourState);
             randomRestartCount++;
         }
@@ -327,7 +234,6 @@ void* hillClimb(int** board, int* state){
     // t2 and t1 keeps processor clock times. frequency keeps clock per second
     statistic[2] = (double)(t2.QuadPart - t1.QuadPart) / frequency.QuadPart;
 
-    freeBoard(neighbourBoard);
     free(neighbourState);
 
     return statistic;
@@ -349,8 +255,8 @@ int main(){
     for (int i = 0; i < 25; i++)
     {
         getRandomState(state);
+        statistics[i] = (double*) hillClimb(state);
         getBoardUsingState(state, board);
-        statistics[i] = (double*) hillClimb(board, state);
         printBoard(board); 
     }
     printStatistics(statistics);
