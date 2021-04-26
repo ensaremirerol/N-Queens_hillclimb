@@ -79,6 +79,55 @@ void getBoardUsingState(int* state, int** board){
     
 }
 
+int evaluteState(int* state){
+    int result = 0;
+
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = i-1; j >=0 ; j--){
+            if(state[i] == state[j]){
+                result++;
+                break;
+            }
+        }
+        for (int j = i-1; j >=0 ; j--){
+            if(state[i] - (i-j) == state[j]){
+                result++;
+                break;
+            }
+        }
+
+        for (int j = i-1; j >=0 ; j--){
+            if(state[i] + (i-j) == state[j]){
+                result++;
+                break;
+            }
+        }
+          
+        for (int j = i+1; j < N; j++){
+            if(state[i] == state[j]){
+                result++;
+                break;
+            }
+        }
+        for (int j = i+1; j < N; j++){
+            if(state[i] - (i-j) == state[j]){
+                result++;
+                break;
+            }
+        }
+
+        for (int j = i+1; j < N; j++){
+            if(state[i] + (i-j) == state[j]){
+                result++;
+                break;
+            }
+        }
+
+    }
+    return (int) result / 2;
+}
+
 // Evalutes board by attack counts
 int evaluteBoard(int** board, int* state){
     // Attack count
@@ -190,7 +239,7 @@ void getBestNeighbour(int** board ,int* state, int result){
                 neighbourState[i] = j;
                 neighbourBoard[neighbourState[i]][i] = 1;
                 neighbourBoard[state[i]][i] = 0;
-                neighbourResult = evaluteBoard(neighbourBoard, neighbourState);
+                neighbourResult = evaluteState(neighbourState);
                 if (neighbourResult <= newResult){
                     copyState(neighbourState, newState);
                     getBoardUsingState(newState, newBoard);
@@ -237,8 +286,8 @@ void* hillClimb(int** board, int* state){
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&t1);
 
-    int result = evaluteBoard(board, state);
-    
+    int result = evaluteState(state);
+   
     int neighbourResult = result;
 
     copyState(state, neighbourState);
@@ -255,7 +304,7 @@ void* hillClimb(int** board, int* state){
         getBestNeighbour(neighbourBoard, neighbourState, neighbourResult);
         // getBestNeighbour only makes one move only
         moveCount++;
-        neighbourResult = evaluteBoard(neighbourBoard, neighbourState);
+        neighbourResult = evaluteState(neighbourState);
         // If getBestNeighbour returns the same state it means we achieved our goal
         // Checks result
         if(compareStates(state, neighbourState)){
@@ -267,7 +316,7 @@ void* hillClimb(int** board, int* state){
             // printf("Random Restart\n");
             getRandomState(neighbourState);
             getBoardUsingState(neighbourState, neighbourBoard);
-            neighbourResult = evaluteBoard(neighbourBoard, neighbourState);
+            neighbourResult = evaluteState(neighbourState);
             randomRestartCount++;
         }
     }
