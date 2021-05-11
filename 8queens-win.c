@@ -26,7 +26,7 @@ void printStatistics(double** statistics){
     for (int i = 0; i < 25; i++)
     {
         printf("%d\t%.0f\t\t%.0f\t\t\t%f\n",i+1, statistics[i][0], statistics[i][1], statistics[i][2]);
-        meanTime = statistics[i][2];
+        meanTime += statistics[i][2];
     }
     meanTime /= 25;
     printf("Avarage Time Spend: %f", meanTime);
@@ -235,9 +235,10 @@ void* hillClimb(int* state){
     return statistic;
 }
 
-int main(){
+int main(int argc, char** args){
     clock_t cl;
-    srand(time(NULL));
+    if(argc > 1) srand(atoi(args[1]));
+    else srand(time(NULL));
     int* state;
     state = (int*) malloc(sizeof(int) * N);
     int** board;
@@ -253,7 +254,8 @@ int main(){
         getRandomState(state);
         statistics[i] = (double*) hillClimb(state);
         getBoardUsingState(state, board);
-        printBoard(board); 
+        printBoard(board);
+        printf("\n");
     }
     printStatistics(statistics);
 
